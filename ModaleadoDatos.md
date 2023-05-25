@@ -4,7 +4,6 @@
 2. Identificar los atributos de las entidades. ✅
 3. Identificar las llaves primarias y foráneas. ✅
 4. Asignar una nomenclatura adeacuada a las entidades y sus atributos. ✅
-   - Entidades en plural y snake_case, atributos en singular y snake_case
 5. Identificar las entidades pivote del sistema. ✅
 6. Identificar los catálogos del sistema. ✅
 7. Identificar los tipos de relaciones del sistema. ✅
