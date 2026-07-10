@@ -15,10 +15,17 @@
 
 ---
 
+## Base de datos
+
+Una base de datos es una colección de información cuidadosamente organizada en un sistema.
+La tecnología que permite organizar los datos y representar la información esencial para un sistema de información se denomina Sistema Gestor de Base de Datos (SGBD) o por sus siglas en inglés (DBMS) Data Base Management System.
+
+---
+
 ## SGBD / DBMS (Sistema gestor de bases de datos)
 
 Un Sistema gestor de bases de datos es una coleccion de información cuidadosamente organizada en un sistema
-Software que nos permite encapsular datos y proporciona una manera de almacenarlos, recuperarlos, ediartlos, eliminarlos
+Software que nos permite encapsular datos y proporciona una manera de almacenarlos, recuperarlos, ediartlos, conservarlos, eliminarlos, etc.
 
 MySQL, SQLServer, MongoDB son Sistemas gestores de bases de datos, no bases de datos.
 
@@ -140,6 +147,108 @@ Identifica un registro como único dentro de la entidad a la que pertenece. En n
 
 Relaciona los datos de un registro de una entidad con los de otra, o con un registro distinto de la misma entidad. En nuestro listado de atributos pondremos las siglas FK de Foreign Key delante del atributo que sea llave foránea.
 
+Beneficios reales de las FK
+
+1. Integridad referencial (el beneficio más importante)
+
+Evitan datos huérfanos o inconsistentes.
+
+Ejemplo:
+
+Tienes:
+
+```
+clientes
+pedidos
+```
+
+Si borras un cliente:
+
+```sql
+DELETE FROM clientes WHERE id = 5;
+```
+
+¿Qué pasa con sus pedidos?
+
+Las FK te obligan a definir reglas claras.
+
+```
+ON DELETE RESTRICT
+```
+
+No deja borrar si hay relaciones:
+
+```sql
+FOREIGN KEY (cliente_id)
+REFERENCES clientes(id)
+ON DELETE RESTRICT
+```
+
+Resultado:
+
+❌ No puedes borrar el cliente.
+
+#### ON DELETE CASCADE
+
+Borra todo lo relacionado:
+
+```sql
+ON DELETE CASCADE
+```
+
+Resultado:
+
+✅ Se borran automáticamente sus pedidos.
+
+2. Evita errores de programación
+
+Imagina un bug en backend:
+
+```sql
+$usuario_id = 999999;
+```
+
+Y haces insert.
+
+Sin FK:
+
+✅ Inserta basura silenciosamente.
+
+Con FK:
+
+❌ Error inmediato.
+
+Y eso es bueno, porque detectas bugs temprano.
+
+3. Documenta relaciones del sistema
+
+Cuando alguien nuevo ve el esquema:
+
+```sql
+orders.customer_id
+→ customers.id
+```
+
+La relación queda explícita.
+
+No tiene que adivinar:
+
+“Creo que este campo apunta a esta tabla…”
+
+Herramientas de modelado incluso generan diagramas automáticamente.
+
+5. Hace más seguro el refactor
+
+Ejemplo:
+
+Quieres borrar una tabla o cambiar IDs.
+
+La BD te avisa:
+
+“Oye, esto está siendo referenciado.”
+
+Sin FK puedes romper medio sistema y enterarte semanas después.
+
 ### Atributos Únicos
 
 En algunas ocasiones vamos a necesitar que algunos atributos de la entidad sean únicos, es decir que no existan datos duplicados en el atributo, sin que necesariamente sea una llave primaria o foránea.
@@ -158,9 +267,9 @@ Para crear una relación semánticamente utiliza un verbo para relacionar las en
 
 ### Tipos de Relaciones
 
-1 a 1: Una persona (e) poseé (r) una única clave de estudiante (e) y viceversa.
-1 a M: Una factura (e) se emite (r) a una persona (e) y sólo a una, pero una persona (e) puede tener (r) varias facturas (e) emitidas a su nombre.
-M a M: Un cliente (e) puede comprar (r) varios productos (e) y un producto (e) puede ser comprado (r) por varios clientes (e).
+- 1 a 1: Una persona (e) poseé (r) una única clave de estudiante (e) y viceversa.
+- 1 a M: Una factura (e) se emite (r) a una persona (e) y sólo a una, pero una persona (e) puede tener (r) varias facturas (e) emitidas a su nombre.
+- M a M: Un cliente (e) puede comprar (r) varios productos (e) y un producto (e) puede ser comprado (r) por varios clientes (e).
 
 ---
 
@@ -217,6 +326,56 @@ Sin embargo, también es importante tener en cuenta que la aplicación de formas
 - Tercera Forma Normal: La 3FN requiere que todas las dependencias funcionales sean removidas de la tabla, es decir, que no haya redundancia de información.
 - Forma Normal de Boyce-Codd: La FNBC es una forma normal más rigurosa que la anteriores y requiere que cada dependencia funcional sea una clave candidata única.
 - Forma Normal de Dominio-Clave: Esta forma normal (FNDC) es una extensiones de la FNBC y se utiliza para asegurar la integridad de los datos en modelos de datos más complejos. No debe haber dependencias funcionales múltiples, es decir, una dependencia funcional en la que varios atributos dependen de una clave externa.
+
+---
+
+### Formas Normales (Resumen Fácil)
+
+### 1FN — Un dato por campo
+
+Cada columna debe tener un valor atómico (sin listas ni datos compuestos).
+
+❌ `telefonos = "123,456"`
+✅ una fila por teléfono
+❌ `direccion = "Calle 123, Ciudad XYZ"`
+✅ `calle = "Calle 123"`, `ciudad = "Ciudad XYZ
+
+---
+
+### 2FN — Todo depende de TODA la PK
+
+(Solo aplica cuando hay PK compuesta)
+
+Si un campo depende solo de una parte de la PK, debe ir a otra tabla.
+
+| detalle_venta |
+| :-----------: | :---------: | :-------------: |
+|   venta_id    | producto_id | producto_nombre |
+
+PK = (venta_id, producto_id)
+
+❌ `(venta_id, producto_id) → producto_nombre`
+✅ `producto_nombre` en tabla `productos`
+
+---
+
+### 3FN — Ninguna columna manda sobre otra
+
+Los atributos deben depender directamente de la PK, no de otro campo.
+
+| ordenes  |
+| -------- | ---------- | -------------- | ----- |
+| orden_id | cliente_id | cliente_nombre | total |
+
+PK = (orden_id)
+
+❌ `cliente_id → cliente_nombre`
+✅ `cliente_nombre` en tabla `clientes`
+
+**Regla mental:**
+**1FN = un dato por celda**
+**2FN = depende de toda la PK**
+**3FN = solo la PK manda**
 
 ---
 

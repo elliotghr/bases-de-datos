@@ -53,7 +53,7 @@ BOOLEAN Valor booleano, verdadero o falso.
 BLOB Objeto binario grande, para almacenar datos binarios, como imágenes o archivos.
 JSON Formato de texto estructurado para el intercambio de datos.
 
-![Tipos de datos](./assets/tipos%20de%20datos.png)
+![Tipos de datos](../assets/tipos-de-datos.png)
 
 ## Tipos de Sentencias SQL
 
@@ -119,19 +119,31 @@ En usuarios, lo que está antes del arroba es el nombre del usuario y lo que est
 ```sql
 CREATE USER 'mi_usuario'@'servidor' IDENTIFIED BY 'mi_password';
 
---contraseña en hash
-SELECT PASSWORD('mi_password');
+-- Permisos específicos de lectura y escritura en una base de datos
+GRANT SELECT, INSERT, UPDATE ON nombre_base.* TO 'mi_usuario'@'servidor' IDENTIFIED BY 'mi_password';
 
-DROP USER 'mi_usuario'@'servidor';
+-- Todos los permisos en una tabla específica
+GRANT ALL PRIVILEGES ON nombre_base.nombre_tabla TO 'mi_usuario'@'servidor' IDENTIFIED BY 'mi_password';
 
-GRANT ALL PRIVILEGES ON nombre_base.tabla TO 'mi_usuario'@'servidor' IDENTIFIED BY 'mi_password';
+-- Todos los permisos en una base de datos
+GRANT ALL PRIVILEGES ON nombre_base.* TO 'mi_usuario'@'servidor' IDENTIFIED BY 'mi_password';
 
 -- Para reflejar los privilegios sin actualizar (buena practica al garantizar o revocarlos)
 FLUSH PRIVILEGES;
 
 SHOW GRANTS for 'mi_usuario'@'servidor';
 
-REVOKE ALL, GRANT OPTION FROM 'mi_usuario'@'servidor';
+-- revocar permisos específicos
+REVOKE SELECT, INSERT ON nombre_base.* FROM 'mi_usuario'@'servidor';
+
+-- revocar todos los permisos
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'mi_usuario'@'servidor';
+
+-- contraseña en hash
+SELECT PASSWORD('mi_password');
+
+-- eliminar usuario
+DROP USER 'mi_usuario'@'servidor';
 ```
 
 ## Gestionando Tablas
@@ -203,7 +215,7 @@ INSERT INTO tabla (campo_1, campo_2, ..., campo_n) VALUES
 Leer todos los campos de la tabla:
 
 ```sql
-SELECT \* FROM tabla;
+SELECT * FROM tabla;
 ```
 
 Leer algunos campos de la tabla:
@@ -215,36 +227,57 @@ SELECT campo_1, campo_2, campo_n FROM tabla;
 Saber cuantos registros tiene mi tabla:
 
 ```sql
-SELECT COUNT(\*) FROM tabla;
+SELECT COUNT(*) FROM tabla;
 ```
+
+### Clausula WHERE
 
 Leer un registro en particular buscando el valor de un campo:
 
 ```sql
-SELECT \* FROM tabla WHERE campo_1 = 'valor_1';
+SELECT * FROM tabla WHERE campo_1 = 'valor_1';
 ```
 
 Leer registros en particular buscando diferentes valores en un campo:
 
 ```sql
-SELECT \* FROM tabla WHERE campo_1 IN ('valor_1', 'valor_2', 'valor_n');
+SELECT * FROM tabla WHERE campo_1 IN ('valor_1', 'valor_2', 'valor_n');
 ```
 
 Leer un registro en particular buscando el valor similar en un campo:
 
+#### Operador LIKE y NOT LIKE
+
 ```sql
-SELECT _ FROM tabla WHERE campo_1 LIKE '%valor_1';
-SELECT _ FROM tabla WHERE campo_1 LIKE 'valor_1%';
-SELECT \* FROM tabla WHERE campo_1 LIKE '%valor_1%';
+SELECT * FROM tabla WHERE campo_1 LIKE '%valor_1';
+SELECT * FROM tabla WHERE campo_1 NOT LIKE '%valor_1';
+SELECT * FROM tabla WHERE campo_1 LIKE 'valor_1%';
+SELECT * FROM tabla WHERE campo_1 LIKE '%valor_1%';
 ```
 
 Leer un registro en particular buscando el valor con operadores lógicos:
 
+#### Operadores relacionales
+
 ```sql
-SELECT _ FROM tabla WHERE campo_1 = 'valor_1' AND campo_2 = 'valor_2';
-SELECT _ FROM tabla WHERE campo_1 = 'valor_1' OR campo_2 = 'valor_2';
-SELECT _ FROM tabla WHERE NOT campo_1 = 'valor_1';
-SELECT _ FROM tabla WHERE campo_1 != 'valor_1';
+SELECT * FROM tabla WHERE campo_1 = valor_1;
+SELECT * FROM tabla WHERE campo_1 != valor_1;
+SELECT * FROM tabla WHERE campo_1 > valor_1;
+SELECT * FROM tabla WHERE campo_1 < valor_1;
+SELECT * FROM tabla WHERE campo_1 >= valor_1;
+SELECT * FROM tabla WHERE campo_1 <= valor_1;
+SELECT * FROM tabla WHERE campo_1 IS NULL;
+SELECT * FROM tabla WHERE campo_1 IS NOT NULL;
+```
+
+#### Operadores lógicos
+
+```sql
+SELECT * FROM tabla WHERE NOT campo_1 = 'valor_1';
+SELECT * FROM tabla WHERE campo_1 != 'valor_1';
+SELECT * FROM tabla WHERE campo_1 = 'valor_1' AND campo_2 = 'valor_2';
+SELECT * FROM tabla WHERE campo_1 != 'valor_1' AND campo_2 >= 'valor_2';
+SELECT * FROM tabla WHERE campo_1 = 'valor_1' OR campo_2 = 'valor_2';
 ```
 
 ### UPDATE
@@ -266,6 +299,22 @@ Siempre agregar la clausula WHERE para evitar eliminar toda la tabla:
 ```sql
 DELETE FROM tabla WHERE campo = valor;
 ```
+
+### TRUNCATE
+
+El comando TRUNCATE se utiliza para eliminar todos los registros de una tabla de manera rápida y eficiente, sin eliminar la estructura de la tabla. A diferencia del comando DELETE, que elimina los registros uno por uno, TRUNCATE elimina todos los registros de una sola vez, lo que lo hace más rápido y eficiente.
+
+```sql
+TRUNCATE TABLE nombre_tabla;
+```
+
+## Funciones de agrupamiento
+
+- MAX: devuelve el valor máximo de una columna.
+- MIN: devuelve el valor mínimo de una columna.
+- AVG: devuelve el valor promedio de una columna.
+- SUM: devuelve la suma total de una columna.
+- COUNT: devuelve el número de registros en una columna.
 
 ## Sentencias de Agrupamiento
 
@@ -338,8 +387,9 @@ Si queremos obtener la lista de nombres únicos de los clientes, podemos utiliza
 ```sql
 SELECT DISTINCT nombre
 FROM Clientes;
-Esta consulta devuelve los nombres únicos de los clientes de la tabla "Clientes", sin importar si tienen apellidos diferentes. El resultado sería el siguiente:
 ```
+
+Esta consulta devuelve los nombres únicos de los clientes de la tabla "Clientes", sin importar si tienen apellidos diferentes. El resultado sería el siguiente:
 
 ![Tabla distinct 2](/SQL/assets/tabla-distinct-2.png)
 
@@ -353,13 +403,15 @@ Por ejemplo, si tenemos una tabla "empleados" con las columnas "nombre", "apelli
 
 ```sql
 SELECT * FROM empleados ORDER BY salario ASC;
-Esto nos devolvería todos los registros de la tabla "empleados" ordenados por el salario de forma ascendente. Si quisiéramos ordenarlos de forma descendente, cambiaríamos "ASC" por "DESC":
 ```
+
+Esto nos devolvería todos los registros de la tabla "empleados" ordenados por el salario de forma ascendente. Si quisiéramos ordenarlos de forma descendente, cambiaríamos "ASC" por "DESC":
 
 ```sql
 SELECT * FROM empleados ORDER BY salario DESC;
-De esta manera, se pueden ordenar los resultados de una consulta de acuerdo a un criterio específico.
 ```
+
+De esta manera, se pueden ordenar los resultados de una consulta de acuerdo a un criterio específico.
 
 ### BETWEEN
 
@@ -396,31 +448,47 @@ Donde indice_inicio es el índice de la primera fila que se debe devolver, y can
 Por ejemplo, la siguiente consulta devuelve los primeros 10 registros de la tabla "clientes":
 
 ```sql
-SELECT \* FROM clientes
+SELECT * FROM clientes
 LIMIT 10;
 ```
 
 Y la siguiente consulta devuelve los registros 11 al 20 de la tabla "clientes":
 
 ```sql
-SELECT \* FROM clientes
+SELECT * FROM clientes
 LIMIT 10, 10;
 ```
 
 Es importante tener en cuenta que el uso de la cláusula LIMIT puede afectar el rendimiento de la consulta, especialmente cuando se utiliza con tablas grandes.
 
+## Funciones de cadena de texto
+
+- CONCAT: concatena dos o más cadenas de texto.
+- LENGTH: devuelve la longitud de una cadena de texto.
+- LOWER: convierte una cadena de texto a minúsculas.
+- UPPER: convierte una cadena de texto a mayúsculas.
+- UCASE: convierte la primera letra de cada palabra en mayúscula y el resto en minúscula.
+- REPEAT: repite una cadena de texto un número específico de veces.
+- REPLACE: reemplaza una parte de una cadena de texto por otra cadena de texto.
+- LTRIM: elimina los espacios en blanco al inicio de una cadena de texto.
+- RTRIM: elimina los espacios en blanco al final de una cadena de texto.
+- TRIM: elimina los espacios en blanco al inicio y al final de una cadena de texto.
+- REVERSE: invierte el orden de los caracteres en una cadena de texto.
+
 ## Sintaxis SQL Avanzada
 
 ### Índices
 
+Es una `estructura de datos` en SQL que mejora la `velocidad de búsqueda` y `consulta de datos` en una tabla, funcionando de forma similar al índice de un libro. Permite `localizar registros más rápido`, aunque puede aumentar el espacio usado y hacer más lentas algunas operaciones de escritura (INSERT, UPDATE, DELETE).
+
 En SQL existen varios tipos de índices, los principales son:
 
-- Índice único (UNIQUE): asegura que los valores de la columna indexada sean únicos en la tabla.
-- Índice primario (PRIMARY KEY): es un tipo especial de índice único que identifica de forma única cada fila de una tabla.
-- Índice secundario (INDEX): es un índice que no tiene restricciones de unicidad y se utiliza para mejorar el rendimiento de consultas que involucran la columna indexada.
-- Índice de texto completo (FULLTEXT): se utiliza para hacer búsquedas de texto completo en columnas de texto grandes, como VARCHAR y TEXT.
+- `Índice único` (UNIQUE): asegura que los valores de la columna indexada sean únicos en la tabla.
+- `Índice primario` (PRIMARY KEY): es un tipo especial de índice único que identifica de forma única cada fila de una tabla.
+- `Índice secundario` (INDEX): es un índice que no tiene restricciones de unicidad y se utiliza para mejorar el rendimiento de consultas que involucran la columna indexada.
+- `Índice de texto completo` (FULLTEXT): se utiliza para hacer búsquedas de texto completo en columnas de texto grandes, como VARCHAR y TEXT.
 
-Ejemplo
+Ejemplo:
 
 ```sql
 CREATE TABLE una_tabla(
@@ -429,6 +497,7 @@ campo_unico VARCHAR(80) UNIQUE,
 campo_index VARCHAR(80),
 campo_3 VARCHAR(80),
 campo_4 VARCHAR(80),
+campo_5 VARCHAR(80),
 INDEX i_campo_index(campo_index)
 FULLTEXT INDEX fi_campo_fulltext(campo_3, campo_4)
 );
@@ -440,6 +509,63 @@ Ejecutando una consulta de tipo FULLTEXT
 SELECT * FROM una_tabla
 WHERE MATCH(campo_3, campo_4)
 AGAINST('una_búsqueda' IN BOOLEAN MODE);
+```
+
+Agregar/eliminar un INDEX a una tabla existente:
+
+```sql
+-- PK y AI
+ALTER TABLE una_tabla ADD CONSTRAINT pk_campo_id PRIMARY KEY(campo_id);
+ALTER TABLE una_tabla MODIFY COLUMN campo_id AUTO_INCREMENT;
+-- UQ
+ALTER TABLE una_tabla ADD CONSTRAINT uq_campo_unico UNIQUE(campo_unico);
+-- INDEX
+ALTER TABLE una_tabla ADD INDEX i_campo(campo_index);
+ALTER TABLE una_tabla ADD INDEX i_campo_3_campo_4(campo_3, campo_4);
+-- FULLTEXT
+ALTER TABLE una_tabla ADD FULLTEXT INDEX fi_campo_busqueda(campo_5);
+-- ELIMINAR
+ALTER TABLE una_tabla DROP FULLTEXT INDEX fi_campo_busqueda;
+ALTER TABLE una_tabla DROP INDEX i_campo_3_campo_4;
+```
+
+El `CONSTRAINT` solo es para PK y UQ
+
+## JOINS
+
+Los JOINs en SQL sirven para combinar filas de dos o más tablas basándose en un campo común entre ellas, devolviendo por tanto datos de diferentes tablas. Un JOIN se produce cuando dos o más tablas se juntan en una sentencia SQL.
+
+Los más importantes son los siguientes:
+
+- `INNER JOIN`: Devuelve todas las filas cuando hay al menos una coincidencia en ambas tablas.
+- `LEFT JOIN`: Devuelve todas las filas de la tabla de la izquierda, y las filas coincidentes de la tabla de la derecha.
+- `RIGHT JOIN`: Devuelve todas las filas de la tabla de la derecha, y las filas coincidentes de la tabla de la izquierda.
+- `OUTER JOIN`: Devuelve todas las filas de las dos tablas, la izquierda y la derecha, también se llama `FULL OUTER JOIN`.
+
+![SQL Joins](/SQL/assets/sql-joins.webp)
+
+```sql
+SELECT * FROM tabla_1 AS t1
+  INNER JOIN tabla_2 AS t2;
+
+SELECT * FROM tabla_1 AS t1
+  INNER JOIN tabla_2 AS t2
+  ON t1.a_campo = t2.a_campo;
+
+SELECT t1.campo_1, t1.campo_2, t1.campo_3, t2.campo_1, t2.campo_5
+  FROM tabla_1 AS t1
+  INNER JOIN tabla_2 AS t2
+  ON t1.campo_1 = t2.campo_5
+  WHERE t1.campo_1 = 'valor'
+  ORDER BY t1.campo_3 DESC;
+
+/* Con FULLTEXT */
+SELECT t1.campo_1, t1.campo_2, t2.campo_1, t2.campo_4
+  FROM tabla_1 AS t1
+  INNER JOIN tabla_2 AS t2
+  ON t1.campo_1 = t2.campo_4
+  WHERE MATCH(t1.campo_1, t1.campo_2, t2.campo_1, t2.campo_4)
+  AGAINST('una_búsqueda' IN BOOLEAN MODE);
 ```
 
 ## Foreign Keys
@@ -475,43 +601,6 @@ CREATE TABLE frameworks (
   FOREIGN KEY (lenguaje) REFERENCES lenguajes(lenguaje_id),
   FOREIGN KEY (entorno) REFERENCES entornos(entorno_id)
 );
-```
-
-## JOINS
-
-Los JOINs en SQL sirven para combinar filas de dos o más tablas basándose en un campo común entre ellas, devolviendo por tanto datos de diferentes tablas. Un JOIN se produce cuando dos o más tablas se juntan en una sentencia SQL.
-
-Los más importantes son los siguientes:
-
-- INNER JOIN: Devuelve todas las filas cuando hay al menos una coincidencia en ambas tablas.
-- LEFT JOIN: Devuelve todas las filas de la tabla de la izquierda, y las filas coincidentes de la tabla de la derecha.
-- RIGHT JOIN: Devuelve todas las filas de la tabla de la derecha, y las filas coincidentes de la tabla de la izquierda.
-- OUTER JOIN: Devuelve todas las filas de las dos tablas, la izquierda y la derecha, también se llama FULL OUTER JOIN.
-
-![SQL Joins](/SQL/assets/sql-joins.webp)
-
-```sql
-SELECT * FROM tabla_1 AS t1
-  INNER JOIN tabla_2 AS t2;
-
-SELECT * FROM tabla_1 AS t1
-  INNER JOIN tabla_2 AS t2
-  ON t1.a_campo = t2.a_campo;
-
-SELECT t1.campo_1, t1.campo_2, t1.campo_3, t2.campo_1, t2.campo_5
-  FROM tabla_1 AS t1
-  INNER JOIN tabla_2 AS t2
-  ON t1.campo_1 = t2.campo_5
-  WHERE t1.campo_1 = 'valor'
-  ORDER BY t1.campo_3 DESC;
-
-/* Con FULLTEXT */
-SELECT t1.campo_1, t1.campo_2, t2.campo_1, t2.campo_4
-  FROM tabla_1 AS t1
-  INNER JOIN tabla_2 AS t2
-  ON t1.campo_1 = t2.campo_4
-  WHERE MATCH(t1.campo_1, t1.campo_2, t2.campo_1, t2.campo_4)
-  AGAINST('una_búsqueda' IN BOOLEAN MODE);
 ```
 
 ## Subconsultas
@@ -593,10 +682,10 @@ En SQL, las restricciones ON DELETE y ON UPDATE se utilizan para especificar qu�
 
 Las acciones que se pueden especificar para las restricciones ON DELETE y ON UPDATE son:
 
-- CASCADE: elimina o actualiza automáticamente los registros relacionados en la tabla relacionada.
-- SET NULL: establece los valores de la columna relacionada en NULL cuando se elimina o actualiza un registro en la tabla principal.
-- SET DEFAULT: establece los valores de la columna relacionada en su valor predeterminado cuando se elimina o actualiza un registro en la tabla principal.
-- RESTRICT: evita la eliminación o actualización de un registro en la tabla principal si hay registros relacionados en la tabla relacionada.
+- `CASCADE`: elimina o actualiza automáticamente los registros relacionados en la tabla relacionada.
+- `SET NULL`: establece los valores de la columna relacionada en NULL cuando se elimina o actualiza un registro en la tabla principal.
+- `SET DEFAULT`: establece los valores de la columna relacionada en su valor predeterminado cuando se elimina o actualiza un registro en la tabla principal.
+- `RESTRICT`: evita la eliminación o actualización de un registro en la tabla principal si hay registros relacionados en la tabla relacionada.
 
 Ejemplo
 
@@ -699,7 +788,25 @@ SELECT SHA2('password', 256);
 
 ### AES_ENCRYPT y AES_DECRYPT
 
-Estas funciones se utilizan para encriptar y desencriptar datos utilizando el algoritmo AES.
+`AES` es un algoritmo de cifrado reversible, por lo que cualquier persona que conozca la clave utilizada puede recuperar el valor original. Por esta razón, es adecuado para proteger información sensible que posteriormente necesite ser recuperada, como:
+
+- Números de tarjeta.
+- Claves API.
+- Tokens.
+- Datos personales.
+- Información financiera.
+
+La clave de cifrado debe ser larga, aleatoria y almacenarse fuera de la base de datos, por ejemplo en variables de entorno o gestores de secretos.
+
+No se recomienda utilizar AES para almacenar contraseñas de usuarios, ya que las contraseñas no deberían poder recuperarse. Si un atacante obtiene la clave de cifrado, podría descifrar todas las contraseñas almacenadas.
+
+Para contraseñas se deben utilizar algoritmos de hash diseñados específicamente para este propósito, tales como:
+
+- Argon2 (recomendado actualmente).
+- bcrypt.
+- PBKDF2.
+
+Estos algoritmos son unidireccionales y están diseñados para ser computacionalmente costosos, dificultando los ataques de fuerza bruta.
 
 ```sql
 SELECT AES_ENCRYPT('password', 'secret_key'),

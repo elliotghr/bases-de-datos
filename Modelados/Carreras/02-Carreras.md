@@ -45,7 +45,7 @@ Por cada entidad estableceremos las reglas de negocio (Operaciones CRUD )
 
 ### tipos_carreras
 
-1. Todos los valores del atributo distancia, de la entidad tipos*carreras deben ser expresados en _km_ y no se podrán repetir
+1. Todos los valores del atributo distancia, de la entidad tipos_carreras deben ser expresados en _km_ y no se podrán repetir
 1. Crear el registro un tipo de carrera
 1. Leer el registro de un tipo de carrera en particular
 1. Leer todos los registros de la entidad tipos_carreras
